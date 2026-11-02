@@ -61,6 +61,16 @@ label{display:block;font-size:12px;color:#444;margin:8px 0 3px}
 canvas{width:100%;height:190px;background:#fff;border:1px solid var(--line);border-radius:8px}
 .ms{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
 .ms b{color:var(--org)}
+.lapx{display:flex;gap:6px;align-items:center;margin:6px 0}
+.lapx input{flex:1}
+.lapx .st{flex:none;width:44px;border:1px solid #b9c1d1;background:#fff;border-radius:8px;padding:8px 0;font-size:15px}
+.lapx .st.on{background:#e8f3e8;border-color:#5a9a2e}
+.lapx .x{flex:none;border:0;background:none;font-size:20px;color:#b00020;padding:4px 8px}
+.sug{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.sug button{border:1px dashed var(--blue);background:#fff;color:var(--blue);border-radius:14px;padding:4px 10px;font-size:12px}
+#lprev{white-space:pre-wrap;font-size:13px;line-height:1.45;background:#f7f9f4;border:1px solid var(--line);border-radius:8px;padding:10px;word-break:break-word}
+details summary{cursor:pointer;font-weight:700;color:var(--navy);padding:4px 0}
+textarea.sm{font-size:14px}
 </style>
 </head>
 <body>
@@ -69,13 +79,15 @@ canvas{width:100%;height:190px;background:#fff;border:1px solid var(--line);bord
 <section id="t-hari" class="tab on"></section>
 <section id="t-rencana" class="tab"></section>
 <section id="t-progres" class="tab"></section>
+<section id="t-lap" class="tab"></section>
 <section id="t-atur" class="tab"></section>
 </main>
 <nav>
   <button data-t="hari" class="on">Hari ini</button>
   <button data-t="rencana">Rencana</button>
   <button data-t="progres">Progres</button>
-  <button data-t="atur">Pengaturan</button>
+  <button data-t="lap">Laporan</button>
+  <button data-t="atur">Atur</button>
 </nav>
 <div id="sheet"><div class="in" id="sin"></div></div>
 <div class="toast" id="toast"></div>
@@ -200,7 +212,7 @@ function todayS(){return ymd(nowD())}
 /* ================= STATE ================= */
 var KEY="rkk.v1";
 var db=(function(){var d;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}d=d||{};
-  d.done=d.done||{};d.ev=d.ev||[];d.fired=d.fired||{};
+  d.done=d.done||{};d.ev=d.ev||[];d.fired=d.fired||{};d.lap=d.lap||{prof:{},docs:{}};
   d.set=Object.assign({notif:true,wd:6,tm:{},off:{},from:todayS()},d.set||{});return d})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Gagal menyimpan")}pushState()}
 function isDone(k){return!!db.done[k]}
@@ -467,9 +479,158 @@ function pushState(){ // salinan jadwal pengingat untuk service worker (periodic
     var done={};rem.forEach(function(r){if(isDone(r.k))done[r.k]=1});
     caches.open("kebun-state").then(function(c){return c.put("state.json",new Response(JSON.stringify({rem:rem,done:done,fired:db.fired,off:!db.set.notif})))}).catch(function(){})}catch(e){}}
 
+
+/* ================= LAPORAN HARIAN: DAILY PLANNING & DAILY REPORT ================= */
+var HFULL=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"],BFULL=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+function fdn(s){var d=pd(s);return d.getDate()+" "+BFULL[d.getMonth()]+" "+d.getFullYear()}
+function fdl(s){return HFULL[pd(s).getDay()]+", "+fdn(s)}
+var LP_DEF={leader:"Syafiq",ops:"Bayu, Musthofa, Andri, Brilian, Rangga, Hardian",opsP:"",opsR:"Syafiq",opsD:"Syafiq",label:"Data Analisis & IoT + Pasca Panen",
+ batches:"GHA Siklus 3 | Kirin | ESTA | 1,3 | 2026-10-10 | 22",
+ prior:"Monitoring Bibit & OPT\nPenambahan Air Nutrisi",
+ harvest:"Penerimaan Order (Standby)\nPacking Order (Standby)\nPencatatan Stok",
+ data:"Dokumentasi Produksi (Bantex)\nAnalisis Serapan Hara Tanaman\nAnalisis Perbandingan per Siklus per GH\nParameter Bak Tanam",
+ pompa:"Pemeriksaan Ruang Pompa (pagi & sore)\nPemantauan pompa dan nutrisi otomatis",
+ catatan:"Shalama (+ Syafiq):\n1. Input & Olah Data\n2. Penyediaan Agroinput\n3. Penyusunan Laporan Mingguan\n• Monitoring Mikroklimat: 07.00 & 11.00\n• Kalibrasi EC, pH & DO meter (Senin) : Arif/ Rasen/Syafiq",
+ foot:"SELALU TERAPKAN KERJA RINGKAS, RESIK, RAPIH, RAWAT DAN RAJIN\nPLANNING BISA BERUBAH SEWAKTU-WAKTU MENYESUAIKAN KEADAAN\nSALING BANTU UNTUK MENYELESAIKAN TUGAS SESUAI TARGET"};
+var AREAN={N:"Nursery",P:"Pasca Panen",R:"Ruang Pompa",D:"Data"};
+var AREAU={N:"NURSERY",P:"PASCA PANEN",R:"RUANG POMPA",D:"DATA ANALISIS"};
+var SECT={N:"NURSERY",P:"HARVESTING ROOM",R:"RUANG POMPA & IoT",D:"DATA & DOKUMENTASI"};
+var SUPL={N:"Nursery",P:"Pasca Panen",R:"Ruang Pompa & IoT",D:"Data Analisis"};
+var RUT={N:"prior",P:"harvest",R:"pompa",D:"data"};
+var lap={kind:"plan",role:"L",areas:{L:"N",S:"G"},dates:{plan:null,rep:null}};
+function prof(){return Object.assign({},LP_DEF,db.lap.prof)}
+function lines(s){return String(s||"").split("\n").map(function(x){return x.trim()}).filter(Boolean)}
+function lapDate(){var td=todayS();if(!lap.dates.plan)lap.dates.plan=add(td,1);if(!lap.dates.rep)lap.dates.rep=td;return lap.dates[lap.kind]}
+function lapArea(){return lap.areas[lap.role]}
+// kunci dokumen: LP/LR = Leader Nursery, SP/SR = Supervisor gabungan (kompatibel dengan versi lama); selain itu "LP:P", "SR:R", dst.
+function lapTK(){var a=lapArea(),def=lap.role==="L"?"N":"G";return lap.role+(lap.kind==="plan"?"P":"R")+(a===def?"":":"+a)}
+function tkArea(tk){return tk.length>2?tk.charAt(3):(tk.charAt(0)==="L"?"N":"G")}
+function tkSwap(tk,t2){return t2+tk.slice(2)}
+function dkey(t,d){return t+"|"+d}
+function mkS(id,t,items,ex){return Object.assign({id:id,t:t,items:(items||[]).map(function(x){return typeof x==="string"?{x:x}:{x:x.x,k:x.k}})},ex||{})}
+function newDoc(tk,date){
+  var p=prof(),S=[],docs=db.lap.docs,t2=tk.slice(0,2),ar=tkArea(tk);
+  if(t2==="LP")S=[mkS("prior","PRIORITAS & TARGET PEKERJAAN",lines(p[RUT[ar]])),mkS("tl0","08.00-11.00",[]),mkS("tl1","13.30-16.30",[]),mkS("tl2","16.20-16.30",[]),mkS("cat","CATATAN",[],{text:ar==="N"?p.catatan:""})];
+  else if(t2==="LR"){var lp=docs[dkey(tkSwap(tk,"LP"),date)],keg=[];
+    if(lp){lp.sections.forEach(function(x){if(/^tl/.test(x.id))keg=keg.concat(x.items)});if(!keg.length)keg=lp.sections[0].items}else keg=lines(p[RUT[ar]]);
+    var nx=docs[dkey(tkSwap(tk,"LP"),add(date,1))];
+    S=[mkS("keg",ar==="N"?"KEGIATAN BUDIDAYA":"KEGIATAN "+AREAU[ar],keg),mkS("akt",ar==="N"?"JUMLAH POPULASI AKTUAL (opsional, tulis sendiri)":"CATATAN / DATA TAMBAHAN (opsional, tulis sendiri)",[],{text:""}),mkS("esok","RENCANA KEGIATAN ESOK HARI",nx?nx.sections[0].items:lines(p[RUT[ar]]))]}
+  else{var sp=docs[dkey(tkSwap(tk,"SP"),date)];
+    if(t2==="SR"&&sp)S=sp.sections.map(function(x){return mkS(x.id,x.t,x.items)});
+    else if(ar==="G")S=[mkS("harvest","HARVESTING ROOM",lines(p.harvest)),mkS("data","DATA & DOKUMENTASI",lines(p.data)),mkS("pompa","RUANG POMPA & IoT",lines(p.pompa))];
+    else S=[mkS("main",SECT[ar],lines(p[RUT[ar]]))]}
+  return{sections:S}}
+function getDoc(tk,date){var k=dkey(tk,date);if(!db.lap.docs[k])db.lap.docs[k]=newDoc(tk,date);return db.lap.docs[k]}
+function stOf(it){return it.st||(it.k&&isDone(it.k)?"done":"ongoing")}
+function batches(date){return lines(prof().batches).map(function(l){var a=l.split("|").map(function(x){return x.trim()});return{n:a[0]||"",v:a[1]||"",an:a[2]||"",ec:a[3]||"",ts:a[4]||"",pop:a[5]||""}}).filter(function(b){return b.n})}
+function popBlock(date){var r=["*UPDATE POPULASI BIBIT*"],b=batches(date);if(!b.length)return[];
+  b.forEach(function(x,i){if(i)r.push("");r.push("# *"+x.n+"*","Varietas : "+x.v,"Air Nutrisi : "+x.an+(x.ec?" _(EC "+x.ec+" mS/cm)_":""),"Tgl. Semai : "+(x.ts?fdn(x.ts):"-"),"Umur = "+(x.ts?diff(date,x.ts):"-")+" HSS","Populasi = "+x.pop+" bibit")});return r}
+function genText(tk,date){
+  var p=prof(),d=getDoc(tk,date),o=[],t2=tk.slice(0,2),ar=tkArea(tk),CA="^^^^^^^^^^^^^^^^^^^^^^^^^^^^",CB="^^^^^^^^^^^^^^^^^^^^^^",CC="------------------------";
+  function sec(id){return d.sections.filter(function(s){return s.id===id})[0]}
+  function its(s){return(s?s.items:[]).filter(function(i){return i.x&&i.x.trim()})}
+  function nums(s,st){return its(s).map(function(it,i){return(i+1)+". "+it.x.trim()+(st?(stOf(it)==="done"?"✅":" _(Ongoing)_"):"")})}
+  if(t2==="LP"){
+    var ops=String(p[ar==="N"?"ops":"ops"+ar]||"").trim();
+    o.push("*["+AREAU[ar]+"] - DAILY PLANNING*","Hari/Tanggal : "+fdl(date),"Leader: "+p.leader);if(ops)o.push("Operator : "+ops);o.push(CA);
+    if(ar==="N"){var pb=popBlock(date);if(pb.length)o=o.concat(pb,[CA])}
+    o.push("*PRIORITAS & TARGET PEKERJAAN:*");o=o.concat(nums(sec("prior")),[CA]);
+    var tls=d.sections.filter(function(s){return/^tl/.test(s.id)&&its(s).length});
+    if(tls.length){o.push("*TIMELINE PEKERJAAN*");tls.forEach(function(s,n){
+      if(n)o.push(n===1?"========================":"------------------------------");
+      o.push(s.t);its(s).forEach(function(i){o.push("• "+i.x.trim())})})}
+    var c=sec("cat");if(c&&c.text&&c.text.trim())o.push(CA,"*CATATAN*",c.text.trim());
+    o.push(CA);lines(p.foot).forEach(function(l){o.push("• "+l)});
+  }else if(t2==="LR"){
+    o.push("*["+AREAU[ar]+"] - DAILY REPORT*","Hari/Tanggal: "+fdl(date),"");
+    if(ar==="N"){var pb2=popBlock(date);if(pb2.length)o=o.concat(pb2,[CB])}
+    o.push("*"+sec("keg").t+"*");its(sec("keg")).forEach(function(i){o.push("• "+i.x.trim()+(stOf(i)==="done"?"✅":" _(Ongoing)_"))});
+    var a=sec("akt");if(a&&a.text&&a.text.trim())o.push(CB,a.text.trim());
+    o.push(CC,"*RENCANA KEGIATAN ESOK HARI:*");o=o.concat(nums(sec("esok")),[CC,"*MATURNUWUN*🙏"]);
+  }else{
+    var rep=t2==="SR",lab=ar==="G"?p.label:SUPL[ar];
+    o.push("*"+HFULL[pd(date).getDay()]+", "+fdn(date)+"*",(rep?"Realisasi":"Schedule")+" pekerjaan "+lab);
+    d.sections.forEach(function(s){if(!its(s).length)return;o.push("*"+s.t+" - _Pelaksanaan & Pengawasan_*");o=o.concat(nums(s,rep));o.push("")});
+    while(o.length&&o[o.length-1]==="")o.pop();
+  }
+  return o.join("\n")}
+
+/* --- saran kegiatan (chip) --- */
+var GSEC={harvest:"P",data:"D",pompa:"R"};
+function shortT(x){return x.split(" (")[0].split(":")[0].trim().slice(0,64)}
+function chipsFor(tk,date,s){
+  var ar=GSEC[s.id]||tkArea(tk);if(!RUT[ar])return[];
+  var dt=s.id==="esok"?add(date,1):date,out=[],have={};
+  s.items.forEach(function(i){have[(i.x||"").toLowerCase()]=1;if(i.k)have[i.k]=1});
+  var pic=(/^tl/.test(s.id)||s.id==="keg")?": "+prof().leader:"";
+  allOccs().forEach(function(o){if(o.t.a!==ar||o.t.k==="e")return;
+    var on=o.t.k==="o"?(o.s<=dt&&o.d>=dt):o.d===dt;if(!on)return;
+    var x=shortT(o.t.x)+pic;if(have[o.k]||have[x.toLowerCase()])return;have[x.toLowerCase()]=1;out.push({x:x,k:o.k})});
+  lines(prof()[RUT[ar]]).forEach(function(l){var x=l+pic;if(!have[x.toLowerCase()]&&!have[l.toLowerCase()]){have[x.toLowerCase()]=1;out.push({x:x})}});
+  return out.slice(0,16)}
+
+/* --- UI --- */
+function renderLap(){
+  var tk=lapTK(),date=lapDate(),d=getDoc(tk,date),rep=lap.kind==="rep",p=prof(),ar=lapArea();
+  var areaList=lap.role==="L"?["N","P","R","D"]:["N","P","R","D","G"];
+  var h='<div class="chips"><button data-lk="plan" class="'+(!rep?"on":"")+'">Daily Planning</button><button data-lk="rep" class="'+(rep?"on":"")+'">Daily Report</button></div>'+
+   '<div class="chips"><button data-lr="L" class="'+(lap.role==="L"?"on":"")+'">Leader</button><button data-lr="S" class="'+(lap.role==="S"?"on":"")+'">Supervisor</button></div>'+
+   '<div class="chips">'+areaList.map(function(a){return'<button data-la="'+a+'" class="'+(ar===a?"on":"")+'">'+(a==="G"?"Gabungan":AREAN[a])+'</button>'}).join("")+'</div>'+
+   '<div class="card"><label style="margin-top:0">Tanggal '+(rep?"laporan (hari ini)":"rencana (besok)")+'</label><input type="date" id="ldate" value="'+date+'"><div class="sub" style="margin-top:4px">'+fdl(date)+'</div></div>';
+  d.sections.forEach(function(s){
+    var multi=/^tl/.test(s.id);
+    h+='<div class="card"><h3>'+(multi?'Blok waktu <input data-ltt="'+s.id+'" value="'+esc(s.t)+'" style="width:140px;display:inline-block;padding:4px 8px;font-size:14px">':esc(s.t))+'</h3>';
+    if(s.id==="cat"||s.id==="akt")h+='<textarea data-lt="'+s.id+'" rows="'+(s.id==="cat"?6:4)+'" class="sm" placeholder="'+(s.id==="akt"?"Tulis sendiri, mis.: *Jumlah Populasi Aktual GH A*\nTotal Tanaman Tepi: ...":"")+'">'+esc(s.text)+'</textarea>';
+    else{
+      s.items.forEach(function(it,i){h+='<div class="lapx"><input data-lx="'+s.id+':'+i+'" value="'+esc(it.x)+'">'+
+        (rep&&s.id!=="esok"?'<button class="st'+(stOf(it)==="done"?" on":"")+'" data-lst="'+s.id+':'+i+'">'+(stOf(it)==="done"?"✅":"…")+'</button>':'')+
+        '<button class="x" data-ldel="'+s.id+':'+i+'">×</button></div>'});
+      h+='<div class="lapx"><input data-ladd-in="'+s.id+'" placeholder="Tambah pekerjaan (ketik lalu +)"><button class="btn sm" style="margin:0" data-ladd="'+s.id+'">+</button></div>';
+      var ch=chipsFor(tk,date,s);
+      if(ch.length)h+='<div class="sub">Saran dari rencana kerja &amp; daftar rutin:</div><div class="sug">'+ch.map(function(c,i){return'<button data-lchip="'+s.id+':'+i+'">+ '+esc(c.x.length>34?c.x.slice(0,33)+"…":c.x)+'</button>'}).join("")+'</div>';
+    }
+    h+='</div>'});
+  if(tk.slice(0,2)==="LP")h+='<button class="btn alt" data-lblock="1">+ Tambah blok waktu</button>';
+  h+='<div class="card" style="margin-top:12px"><h3>Hasil (siap kirim)</h3><div id="lprev"></div>'+
+   '<button class="btn" data-lcopy="1">Salin teks</button><button class="btn alt" data-lwa="1">Buka di WhatsApp</button>'+
+   '<button class="btn alt" data-lreset="1">'+(rep?"Muat ulang dari rencana":"Reset ke daftar rutin")+'</button></div>';
+  h+='<details class="card"><summary>Profil laporan (nama, operator, rutin)</summary>'+
+   [["leader","Nama leader (semua area)"],["ops","Operator Nursery (pisahkan koma)"],["opsP","Operator Pasca Panen"],["opsR","Operator Ruang Pompa"],["opsD","Operator Data"],["label","Judul pekerjaan Supervisor Gabungan"]].map(function(f){return'<label>'+f[1]+'</label><input data-prof="'+f[0]+'" value="'+esc(p[f[0]])+'">'}).join("")+
+   [["batches","Populasi bibit Nursery (satu baris per bibit: Nama | Varietas | Air nutrisi | EC | Tgl semai YYYY-MM-DD | Jumlah)",3],["prior","Rutin Nursery (satu per baris)",3],["harvest","Rutin Pasca Panen (Harvesting Room)",3],["pompa","Rutin Ruang Pompa &amp; IoT",3],["data","Rutin Data &amp; Dokumentasi",4],["catatan","Catatan tetap Daily Planning Nursery",5],["foot","Kalimat penutup Daily Planning Leader",4]].map(function(f){return'<label>'+f[1]+'</label><textarea class="sm" data-prof="'+f[0]+'" rows="'+f[2]+'">'+esc(p[f[0]])+'</textarea>'}).join("")+
+   '<p class="sub">Perubahan profil berlaku untuk laporan baru dan untuk blok populasi bibit. Laporan yang sudah dibuat tidak berubah.</p></details>';
+  $("t-lap").innerHTML=h;lapPreview();
+}
+function lapPreview(){var e=$("lprev");if(e)e.textContent=genText(lapTK(),lapDate())}
+function lapSec(id){return getDoc(lapTK(),lapDate()).sections.filter(function(s){return s.id===id})[0]}
+function lapCopy(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){toast("Teks disalin. Tempel di WhatsApp.")},function(){lapCopyOld(t)});else lapCopyOld(t)}
+function lapCopyOld(t){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();toast(ok?"Teks disalin. Tempel di WhatsApp.":"Gagal menyalin; tekan lama teks hasil lalu salin")}
+document.addEventListener("input",function(e){var t=e.target;
+  if(t.dataset.lx){var a=t.dataset.lx.split(":");lapSec(a[0]).items[+a[1]].x=t.value;save();lapPreview()}
+  else if(t.dataset.lt){lapSec(t.dataset.lt).text=t.value;save();lapPreview()}
+  else if(t.dataset.ltt){lapSec(t.dataset.ltt).t=t.value;save();lapPreview()}
+  else if(t.dataset.prof){db.lap.prof[t.dataset.prof]=t.value;save();lapPreview()}});
+document.addEventListener("change",function(e){if(e.target.id==="ldate"&&e.target.value){lap.dates[lap.kind]=e.target.value;renderLap()}});
+document.addEventListener("click",function(e){
+  var el=e.target.closest("[data-lk],[data-lr],[data-la],[data-lst],[data-ldel],[data-ladd],[data-lchip],[data-lblock],[data-lcopy],[data-lwa],[data-lreset]");if(!el)return;
+  var T=lapTK(),D=lapDate(),ds=el.dataset,a;
+  if(ds.lk){lap.kind=ds.lk;renderLap();return}
+  if(ds.lr){lap.role=ds.lr;renderLap();return}
+  if(ds.la){lap.areas[lap.role]=ds.la;renderLap();return}
+  if(ds.lst){a=ds.lst.split(":");var it=lapSec(a[0]).items[+a[1]];it.st=stOf(it)==="done"?"ongoing":"done";save();renderLap();return}
+  if(ds.ldel){a=ds.ldel.split(":");lapSec(a[0]).items.splice(+a[1],1);save();renderLap();return}
+  if(ds.ladd){var inp=document.querySelector('[data-ladd-in="'+ds.ladd+'"]'),v=inp.value.trim();if(!v){toast("Ketik nama pekerjaan dulu");return}lapSec(ds.ladd).items.push({x:v});save();renderLap();
+    var n=document.querySelector('[data-ladd-in="'+ds.ladd+'"]');if(n)n.focus();return}
+  if(ds.lchip){a=ds.lchip.split(":");var s=lapSec(a[0]),c=chipsFor(T,D,s)[+a[1]];if(c){s.items.push({x:c.x,k:c.k});save();renderLap()}return}
+  if(ds.lblock){var d=getDoc(T,D),n2=d.sections.filter(function(s){return/^tl/.test(s.id)}).length;d.sections.splice(d.sections.length-1,0,mkS("tl"+(n2+Date.now()%1000),"00.00-00.00",[]));save();renderLap();return}
+  if(ds.lcopy){lapCopy(genText(T,D));return}
+  if(ds.lwa){window.open("https://wa.me/?text="+encodeURIComponent(genText(T,D)),"_blank");return}
+  if(ds.lreset){if(confirm("Buat ulang dari "+(lap.kind==="rep"?"rencana":"daftar rutin")+"? Isian yang sudah diedit akan diganti.")){delete db.lap.docs[dkey(T,D)];save();renderLap()}return}
+});
+
 /* ================= MULAI ================= */
 function renderAll(){var on=document.querySelector(".tab.on").id;
-  if(on==="t-hari")renderHari();else if(on==="t-rencana")renderRencana();else if(on==="t-progres")renderProgres();else renderAtur();
+  if(on==="t-hari")renderHari();else if(on==="t-rencana")renderRencana();else if(on==="t-progres")renderProgres();else if(on==="t-lap")renderLap();else renderAtur();
   var p=stats("");$("hdr").textContent="November 2026 · Progres "+pct(p.done,p.tot)+"% · "+p.late+" terlewat"}
 renderAll();checkReminders();pushState();
 setInterval(function(){checkReminders();if(document.querySelector(".tab.on").id==="t-hari")renderHari()},30000);
