@@ -497,7 +497,7 @@ var AREAU={N:"NURSERY",P:"PASCA PANEN",R:"RUANG POMPA",D:"DATA ANALISIS"};
 var SECT={N:"NURSERY",P:"HARVESTING ROOM",R:"RUANG POMPA & IoT",D:"DATA & DOKUMENTASI"};
 var SUPL={N:"Nursery",P:"Pasca Panen",R:"Ruang Pompa & IoT",D:"Data Analisis"};
 var RUT={N:"prior",P:"harvest",R:"pompa",D:"data"};
-var lap={kind:"plan",role:"L",areas:{L:"N",S:"G"},dates:{plan:null,rep:null}};
+var lap={kind:"plan",role:"L",areas:{L:"N",S:"G"},dates:{plan:null,rep:null},man:{}};
 function prof(){return Object.assign({},LP_DEF,db.lap.prof)}
 function lines(s){return String(s||"").split("\n").map(function(x){return x.trim()}).filter(Boolean)}
 function lapDate(){var td=todayS();if(!lap.dates.plan)lap.dates.plan=add(td,1);if(!lap.dates.rep)lap.dates.rep=td;return lap.dates[lap.kind]}
@@ -555,19 +555,24 @@ function genText(tk,date){
   }
   return o.join("\n")}
 
-/* --- saran kegiatan (chip) --- */
+/* --- opsi dropdown: dari tab Hari ini (terjadwal pada tanggal itu) dan tab Rencana (semua pekerjaan area) --- */
 var GSEC={harvest:"P",data:"D",pompa:"R"};
-function shortT(x){return x.split(" (")[0].split(":")[0].trim().slice(0,64)}
-function chipsFor(tk,date,s){
+function shortT(x){var t=x.split(" (")[0].split(":")[0].trim();
+  if(t.length>48){var c=t.indexOf(", ");if(c>10)t=t.slice(0,c);else{c=t.indexOf(" — ");if(c>10)t=t.slice(0,c)}}
+  if(t.length>52){t=t.slice(0,52);t=t.slice(0,t.lastIndexOf(" "))}return t}
+function lapOpts(tk,date,s){
   var ar=GSEC[s.id]||tkArea(tk);if(!RUT[ar])return[];
   var dt=s.id==="esok"?add(date,1):date,out=[],have={};
   s.items.forEach(function(i){have[(i.x||"").toLowerCase()]=1;if(i.k)have[i.k]=1});
   var pic=(/^tl/.test(s.id)||s.id==="keg")?": "+prof().leader:"";
-  allOccs().forEach(function(o){if(o.t.a!==ar||o.t.k==="e")return;
-    var on=o.t.k==="o"?(o.s<=dt&&o.d>=dt):o.d===dt;if(!on)return;
-    var x=shortT(o.t.x)+pic;if(have[o.k]||have[x.toLowerCase()])return;have[x.toLowerCase()]=1;out.push({x:x,k:o.k})});
-  lines(prof()[RUT[ar]]).forEach(function(l){var x=l+pic;if(!have[x.toLowerCase()]&&!have[l.toLowerCase()]){have[x.toLowerCase()]=1;out.push({x:x})}});
-  return out.slice(0,16)}
+  var gH="Terjadwal "+fds(dt)+" (tab Hari ini)",gR="Daftar rutin",gL="Rencana kerja lainnya (tab Rencana)";
+  function add1(g,l,x,k){var key=k||x.toLowerCase();if(have[key]||have[x.toLowerCase()])return;have[key]=1;have[x.toLowerCase()]=1;out.push({g:g,l:l,x:x,k:k})}
+  var oc=allOccs().filter(function(o){return o.t.a===ar&&o.t.k!=="e"});
+  oc.filter(function(o){return o.t.k==="o"?(o.s<=dt&&o.d>=dt):o.d===dt}).sort(function(a,b){return timeOf(a.t).localeCompare(timeOf(b.t))})
+    .forEach(function(o){add1(gH,shortT(o.t.x)+(o.t.k==="o"?"":" · "+timeOf(o.t)),shortT(o.t.x)+pic,o.k)});
+  lines(prof()[RUT[ar]]).forEach(function(l){add1(gR,l,l+pic)});
+  oc.filter(function(o){return o.t.k==="o"}).sort(function(a,b){return a.s.localeCompare(b.s)}).forEach(function(o){add1(gL,shortT(o.t.x)+" · "+fds(o.s),shortT(o.t.x)+pic,o.k)});
+  return out}
 
 /* --- UI --- */
 function renderLap(){
@@ -585,9 +590,12 @@ function renderLap(){
       s.items.forEach(function(it,i){h+='<div class="lapx"><input data-lx="'+s.id+':'+i+'" value="'+esc(it.x)+'">'+
         (rep&&s.id!=="esok"?'<button class="st'+(stOf(it)==="done"?" on":"")+'" data-lst="'+s.id+':'+i+'">'+(stOf(it)==="done"?"✅":"…")+'</button>':'')+
         '<button class="x" data-ldel="'+s.id+':'+i+'">×</button></div>'});
-      h+='<div class="lapx"><input data-ladd-in="'+s.id+'" placeholder="Tambah pekerjaan (ketik lalu +)"><button class="btn sm" style="margin:0" data-ladd="'+s.id+'">+</button></div>';
-      var ch=chipsFor(tk,date,s);
-      if(ch.length)h+='<div class="sub">Saran dari rencana kerja &amp; daftar rutin:</div><div class="sug">'+ch.map(function(c,i){return'<button data-lchip="'+s.id+':'+i+'">+ '+esc(c.x.length>34?c.x.slice(0,33)+"…":c.x)+'</button>'}).join("")+'</div>';
+      var op=lapOpts(tk,date,s),gr={};
+      op.forEach(function(o,i){(gr[o.g]=gr[o.g]||[]).push('<option value="'+i+'">'+esc(o.l)+'</option>')});
+      h+='<div class="lapx"><select data-lsel="'+s.id+'"><option value="">+ Pilih pekerjaan dari Hari ini / Rencana…</option>'+
+        Object.keys(gr).map(function(g){return'<optgroup label="'+esc(g)+'">'+gr[g].join("")+'</optgroup>'}).join("")+
+        '<option value="__manual">✏️ Ketik sendiri (pekerjaan tambahan)…</option></select></div>';
+      if(lap.man[s.id])h+='<div class="lapx"><input data-ladd-in="'+s.id+'" placeholder="Ketik pekerjaan tambahan"><button class="btn sm" style="margin:0" data-ladd="'+s.id+'">Tambah</button></div>';
     }
     h+='</div>'});
   if(tk.slice(0,2)==="LP")h+='<button class="btn alt" data-lblock="1">+ Tambah blok waktu</button>';
@@ -610,18 +618,21 @@ document.addEventListener("input",function(e){var t=e.target;
   else if(t.dataset.lt){lapSec(t.dataset.lt).text=t.value;save();lapPreview()}
   else if(t.dataset.ltt){lapSec(t.dataset.ltt).t=t.value;save();lapPreview()}
   else if(t.dataset.prof){db.lap.prof[t.dataset.prof]=t.value;save();lapPreview()}});
-document.addEventListener("change",function(e){if(e.target.id==="ldate"&&e.target.value){lap.dates[lap.kind]=e.target.value;renderLap()}});
+document.addEventListener("change",function(e){var t=e.target;
+  if(t.id==="ldate"&&t.value){lap.dates[lap.kind]=t.value;renderLap();return}
+  if(t.dataset.lsel!==undefined){var id=t.dataset.lsel,v=t.value;if(v==="")return;
+    if(v==="__manual"){lap.man[id]=true;renderLap();var n=document.querySelector('[data-ladd-in="'+id+'"]');if(n)n.focus();return}
+    var sc=lapSec(id),o=lapOpts(lapTK(),lapDate(),sc)[+v];if(o){sc.items.push({x:o.x,k:o.k});save();renderLap();toast("Ditambahkan: "+o.x.slice(0,40))}}});
 document.addEventListener("click",function(e){
-  var el=e.target.closest("[data-lk],[data-lr],[data-la],[data-lst],[data-ldel],[data-ladd],[data-lchip],[data-lblock],[data-lcopy],[data-lwa],[data-lreset]");if(!el)return;
+  var el=e.target.closest("[data-lk],[data-lr],[data-la],[data-lst],[data-ldel],[data-ladd],[data-lblock],[data-lcopy],[data-lwa],[data-lreset]");if(!el)return;
   var T=lapTK(),D=lapDate(),ds=el.dataset,a;
   if(ds.lk){lap.kind=ds.lk;renderLap();return}
   if(ds.lr){lap.role=ds.lr;renderLap();return}
   if(ds.la){lap.areas[lap.role]=ds.la;renderLap();return}
   if(ds.lst){a=ds.lst.split(":");var it=lapSec(a[0]).items[+a[1]];it.st=stOf(it)==="done"?"ongoing":"done";save();renderLap();return}
   if(ds.ldel){a=ds.ldel.split(":");lapSec(a[0]).items.splice(+a[1],1);save();renderLap();return}
-  if(ds.ladd){var inp=document.querySelector('[data-ladd-in="'+ds.ladd+'"]'),v=inp.value.trim();if(!v){toast("Ketik nama pekerjaan dulu");return}lapSec(ds.ladd).items.push({x:v});save();renderLap();
+  if(ds.ladd){var inp=document.querySelector('[data-ladd-in="'+ds.ladd+'"]'),v=inp.value.trim();if(!v){toast("Ketik nama pekerjaan dulu");return}lapSec(ds.ladd).items.push({x:v});lap.man[ds.ladd]=true;save();renderLap();
     var n=document.querySelector('[data-ladd-in="'+ds.ladd+'"]');if(n)n.focus();return}
-  if(ds.lchip){a=ds.lchip.split(":");var s=lapSec(a[0]),c=chipsFor(T,D,s)[+a[1]];if(c){s.items.push({x:c.x,k:c.k});save();renderLap()}return}
   if(ds.lblock){var d=getDoc(T,D),n2=d.sections.filter(function(s){return/^tl/.test(s.id)}).length;d.sections.splice(d.sections.length-1,0,mkS("tl"+(n2+Date.now()%1000),"00.00-00.00",[]));save();renderLap();return}
   if(ds.lcopy){lapCopy(genText(T,D));return}
   if(ds.lwa){window.open("https://wa.me/?text="+encodeURIComponent(genText(T,D)),"_blank");return}
