@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Rencana Kerja Kebun</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f3864">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kerja Kebun">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--navy:#1f3864;--blue:#4472C4;--org:#ED7D31;--bg:#f4f6fa;--line:#d9dee8;--mut:#667}
+*{box-sizing:border-box}
+body{margin:0;font-family:Calibri,system-ui,sans-serif;background:var(--bg);color:#111;padding-bottom:72px;-webkit-text-size-adjust:100%}
+header{background:var(--navy);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 10px}
+header b{font-size:18px}header small{display:block;opacity:.8;font-size:12px}
+main{padding:12px;max-width:640px;margin:auto}
+.tab{display:none}.tab.on{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;border:0;background:none;padding:12px 2px;font-size:14px;color:#555}
+nav button.on{color:var(--blue);font-weight:700;border-top:3px solid var(--blue);padding-top:9px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:15px}
+.sub{font-size:12px;color:var(--mut)}
+.kv{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #eef0f5;font-size:14px}
+.kv:last-child{border:0}
+.row{display:flex;align-items:flex-start;gap:10px;padding:10px 4px;border-bottom:1px solid #eef0f5}
+.row:last-child{border:0}
+.cb{flex:none;width:28px;height:28px;border:2px solid #9aa5bd;border-radius:7px;background:#fff;font-size:18px;line-height:22px;color:#fff;padding:0;text-align:center}
+.cb.on{background:var(--blue);border-color:var(--blue)}
+.rt{flex:1;min-width:0}
+.rt .t{font-size:15px}.rt.done .t{text-decoration:line-through;color:#889}
+.chip{display:inline-block;font-size:11px;background:#e8eefb;color:var(--navy);border-radius:10px;padding:1px 8px;margin-right:4px}
+.chip.late{background:#fde8d9;color:#9a3d00}.chip.us{background:#fff2cc;color:#6b5200}
+.tm{flex:none;font-size:12px;color:var(--mut);width:42px;text-align:right}
+.bar{height:12px;background:#e6eaf3;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue)}
+.big{font-size:34px;font-weight:700;color:var(--navy)}
+.btn{width:100%;background:var(--blue);color:#fff;border:0;border-radius:8px;padding:12px;font-size:15px;font-weight:700;margin-top:8px}
+.btn.alt{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+.btn.sm{width:auto;padding:8px 12px;font-size:13px}
+select,input,textarea{width:100%;font-size:16px;padding:9px;border:1px solid #b9c1d1;border-radius:8px;background:#fff;font-family:inherit}
+label{display:block;font-size:12px;color:#444;margin:8px 0 3px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
+.chips button{flex:none;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:16px;padding:6px 12px;font-size:13px}
+.chips button.on{background:var(--blue);color:#fff}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10}
+#sheet.on{display:block}
+#sheet .in{position:absolute;left:0;right:0;bottom:0;max-height:88%;overflow:auto;background:#fff;border-radius:16px 16px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom))}
+.grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.grid button{border:1px solid #b9c1d1;background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;min-width:50px}
+.grid button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.grid button.fut{opacity:.55}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:#222;color:#fff;padding:8px 14px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:20;max-width:90%}
+.toast.show{opacity:1}
+.alert{background:#fff2cc;border:1px solid #e6c76a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+.empty{color:#778;text-align:center;padding:14px;font-size:14px}
+canvas{width:100%;height:190px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.ms{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
+.ms b{color:var(--org)}
+</style>
+</head>
+<body>
+<header><b>🍈 Rencana Kerja Kebun</b><small id="hdr">November 2026 · Lavaland Farmhouse</small></header>
+<main>
+<section id="t-hari" class="tab on"></section>
+<section id="t-rencana" class="tab"></section>
+<section id="t-progres" class="tab"></section>
+<section id="t-atur" class="tab"></section>
+</main>
+<nav>
+  <button data-t="hari" class="on">Hari ini</button>
+  <button data-t="rencana">Rencana</button>
+  <button data-t="progres">Progres</button>
+  <button data-t="atur">Pengaturan</button>
+</nav>
+<div id="sheet"><div class="in" id="sin"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DATA RENCANA (sumber: Rencana Kerja November 2026) ================= */
+// k: o=sekali (rentang s..e), ds=daftar tanggal, d=harian, a=selang 2 hari, w=mingguan, e=kejadian (dicatat saat terjadi)
+// u=usulan (belum prosedur tetap), nt=catatan. Tanggal "MM-DD" tahun 2026.
+var AREA={N:"GH Nursery",P:"Pasca Panen",D:"Analisis Data",R:"Ruang Pompa"};
+var TASKS=[
+{i:"N01",a:"N",th:"Persiapan",x:"Bersihkan ruang pembibitan, nampan semai, dan alat",h:"Daftar periksa kebersihan terisi",k:"o",s:"11-02",e:"11-07"},
+{i:"N02",a:"N",th:"Persiapan",x:"Cek stok rockwool, nutrisi semai, benih, dan label; catat kekurangannya",h:"Daftar stok dan kebutuhan beli",k:"o",s:"11-02",e:"11-07"},
+{i:"N03",a:"N",th:"Persiapan",x:"Cek alat misting (nozel, keran, timer) dan wadah air nutrisi nampan semai",h:"Misting dan penambahan air nutrisi siap dipakai",k:"o",s:"11-03",e:"11-07"},
+{i:"N04",a:"N",th:"Persiapan",x:"Tetapkan tanggal semai bersama Leader GH (rencana tanam GH-B Siklus 3)",h:"Tanggal semai disepakati",k:"o",s:"11-16",e:"11-21"},
+{i:"N05",a:"N",th:"Persiapan",x:"Sortir benih dan hitung kebutuhannya (target tanam + cadangan sulaman)",h:"Benih tersortir",k:"o",s:"11-23",e:"11-23",nt:"H-2 semai"},
+{i:"N06",a:"N",th:"Persiapan",x:"Rendam dan peram benih tersortir (25–30°C, kelembapan 50–70%)",h:"Benih siap semai",k:"o",s:"11-24",e:"11-24",nt:"H-1 semai"},
+{i:"N07",a:"N",th:"Pelaksanaan",x:"Semai benih ke rockwool dan catat jumlahnya",h:"Jumlah semai tercatat",k:"o",s:"11-25",e:"11-25",u:1,nt:"0 HSS (usulan)"},
+{i:"N08",a:"N",th:"Pelaksanaan",x:"Seleksi awal bibit",h:"Bibit lemah dan tidak tumbuh tersisih",k:"o",s:"11-30",e:"11-30",nt:"5 HSS"},
+{i:"N09",a:"N",th:"Pelaksanaan",x:"Ukur vigor bibit (tinggi, jumlah daun, diameter batang)",h:"Data vigor bibit",k:"ds",ds:["11-30","12-02","12-04","12-06"],nt:"5, 7, 9, 11 HSS"},
+{i:"N10",a:"N",th:"Pelaksanaan",x:"Pruning daun kotiledon",h:"Kotiledon terpangkas",k:"o",s:"12-04",e:"12-04",nt:"9 HSS"},
+{i:"N11",a:"N",th:"Pelaksanaan",x:"Seleksi akhir bibit",h:"Jumlah bibit layak tanam",k:"o",s:"12-05",e:"12-05",nt:"10 HSS, H-1 pindah tanam"},
+{i:"N12",a:"N",th:"Pemeliharaan",x:"Misting nampan semai (bergantian, 2 hari sekali)",h:"Bibit cukup air",k:"a",s:"11-25",e:"12-05",tm:"08:00"},
+{i:"N13",a:"N",th:"Pemeliharaan",x:"Tambah air nutrisi nampan semai (bergantian, 2 hari sekali)",h:"Bibit cukup nutrisi",k:"a",s:"11-26",e:"12-06",tm:"08:00"},
+{i:"N14",a:"N",th:"Pemeliharaan",x:"Cek suhu, kelembapan udara, dan kebasahan rockwool",h:"Catatan harian",k:"d",s:"11-25",e:"12-06",tm:"08:30"},
+{i:"N15",a:"N",th:"Pemeliharaan",x:"Pantau hama dan penyakit (embun bulu, embun tepung) serta kebersihan ruang",h:"Temuan hama dan penyakit tercatat",k:"d",s:"11-25",e:"12-06",tm:"09:00",nt:"Asumsi: selama masa semai"},
+{i:"N16",a:"N",th:"Evaluasi",x:"Susun laporan evaluasi semai GH-A Siklus 3 (pemilihan benih sampai serah terima)",h:"Laporan evaluasi semai",k:"o",s:"11-09",e:"11-14"},
+{i:"N17",a:"N",th:"Evaluasi",x:"Cek kesiapan pembibitan terhadap daftar periksa dan jadwal",h:"Catatan kesiapan",k:"o",s:"11-24",e:"11-24"},
+{i:"N18",a:"N",th:"Evaluasi",x:"Rekap data vigor dan hasil seleksi (bibit layak tanam vs target)",h:"Rekap mutu bibit",k:"o",s:"12-05",e:"12-05"},
+{i:"N19",a:"N",th:"Evaluasi",x:"Serahkan bibit ke Leader GH dengan formulir serah terima",h:"Formulir serah terima ditandatangani",k:"o",s:"12-06",e:"12-06",nt:"11 HSS"},
+
+{i:"P01",a:"P",th:"Persiapan",x:"Periksa ruang kemas (25–28°C) dan ruang simpan: suhu, kelembapan, sirkulasi, kebersihan",h:"Hasil pemeriksaan dan daftar perbaikan",k:"o",s:"11-02",e:"11-07"},
+{i:"P02",a:"P",th:"Persiapan",x:"Tutup celah masuk tikus; pasang perangkap atau umpan di titik rawan",h:"Ruang tertutup rapat, perangkap terpasang",k:"o",s:"11-02",e:"11-07"},
+{i:"P03",a:"P",th:"Persiapan",x:"Uji refraktometer (kadar gula) dan timbangan",h:"Alat siap pakai",k:"o",s:"11-09",e:"11-14"},
+{i:"P04",a:"P",th:"Persiapan",x:"Cek stok dan beli kekurangan: jaring busa, kardus dan sekat, stiker, label QR, keranjang berlapis busa",h:"Kemasan cukup",k:"o",s:"11-02",e:"11-14"},
+{i:"P05",a:"P",th:"Persiapan",x:"Siapkan formulir: catatan per buah, stok gudang, buah rusak, suhu dan kelembapan ruang",h:"Formulir siap",k:"o",s:"11-09",e:"11-14"},
+{i:"P06",a:"P",th:"Persiapan",x:"Beri pengarahan dan bagi tugas tim panen, pemilahan, pengemasan",h:"Daftar tugas per orang",k:"o",s:"11-16",e:"11-21"},
+{i:"P07",a:"P",th:"Persiapan",x:"Uji coba alur dari panen sampai penyimpanan",h:"Catatan kendala",k:"o",s:"11-19",e:"11-21"},
+{i:"P08",a:"P",th:"Persiapan",x:"Sterilkan gunting, keranjang, dan nampan",h:"Alat steril",k:"o",s:"11-26",e:"11-28",nt:"Seluruh persiapan panen selesai paling lambat 28 Nov"},
+{i:"P09",a:"P",th:"Pelaksanaan",x:"Sensus buah #1 (gramasi dan populasi) GH-B Siklus 2",h:"Perkiraan hasil awal",k:"o",s:"11-09",e:"11-09",nt:"40 HST"},
+{i:"P10",a:"P",th:"Pelaksanaan",x:"Sensus buah #2 (gramasi dan populasi) dan perkiraan hari panen",h:"Perkiraan hasil akhir",k:"o",s:"11-19",e:"11-19",nt:"50 HST"},
+{i:"P11",a:"P",th:"Pelaksanaan",x:"Cek kematangan: jaring kulit rata, warna merata, aroma kuat, retakan pangkal tangkai, 12–18 °Brix",h:"Buah layak panen",k:"d",s:"11-28",e:"12-01",tm:"06:00"},
+{i:"P12",a:"P",th:"Pelaksanaan",x:"Panen 06.00–09.00 atau 15.00–17.00 WIB; potong tangkai bentuk T; keranjang berlapis busa",h:"Buah terpanen tanpa luka",k:"d",s:"11-29",e:"12-01",tm:"05:45"},
+{i:"P13",a:"P",th:"Pelaksanaan",x:"Pilah Kirin menurut berat (<800, 800–949, 950–1.099, 1.100–1.499, ≥1.500 g) dan ukur kadar gula",h:"Data kelas dan kadar gula",k:"d",s:"11-29",e:"12-01",tm:"10:00"},
+{i:"P14",a:"P",th:"Pelaksanaan",x:"Kemas dengan jaring busa, stiker, label QR, dan kardus sesuai pesanan",h:"Buah siap simpan",k:"d",s:"11-29",e:"12-01",tm:"11:00"},
+{i:"P15",a:"P",th:"Pelaksanaan",x:"Simpan di ruang simpan dengan alas (tidak menempel lantai); masuk lebih dulu keluar lebih dulu",h:"Stok tercatat per kelompok panen",k:"d",s:"11-29",e:"12-01",tm:"12:00"},
+{i:"P16",a:"P",th:"Pemeliharaan",x:"Bersihkan ruang kemas dan alat setelah panen; jangan tinggalkan sisa buah",h:"Daftar periksa kebersihan",k:"d",s:"11-29",e:"12-01",tm:"17:30"},
+{i:"P17",a:"P",th:"Pemeliharaan",x:"Catat suhu dan kelembapan ruang simpan — pagi",h:"Catatan suhu dan kelembapan",k:"d",s:"11-29",e:"12-06",tm:"07:00",nt:"Asumsi: mulai saat panen"},
+{i:"P18",a:"P",th:"Pemeliharaan",x:"Catat suhu dan kelembapan ruang simpan — sore",h:"Catatan suhu dan kelembapan",k:"d",s:"11-29",e:"12-06",tm:"16:30",nt:"Asumsi: mulai saat panen"},
+{i:"P19",a:"P",th:"Pemeliharaan",x:"Cek perangkap tikus, buang tangkapan, ganti umpan, catat tanda serangan",h:"Catatan pengendalian tikus",k:"d",s:"11-08",e:"12-01",tm:"08:00",nt:"Asumsi: setelah perangkap terpasang"},
+{i:"P20",a:"P",th:"Pemeliharaan",x:"Catat buah busuk, rusak, dan susut",h:"Catatan buah rusak",k:"d",s:"11-29",e:"12-01",tm:"17:00"},
+{i:"P21",a:"P",th:"Evaluasi",x:"Rekap harian: berat total, persentase tiap kelas, rata-rata kadar gula",h:"Rekap panen harian",k:"d",s:"11-29",e:"12-01",tm:"18:00"},
+{i:"P22",a:"P",th:"Evaluasi",x:"Bandingkan perkiraan hasil dengan hasil nyata",h:"Selisih perkiraan",k:"o",s:"12-02",e:"12-02",nt:"Setelah panen selesai"},
+{i:"P23",a:"P",th:"Evaluasi",x:"Tinjau catatan suhu, kelembapan, serangan tikus; perbaiki penyimpanan bila perlu",h:"Catatan perbaikan ruang simpan",k:"w",s:"11-29",e:"12-06"},
+{i:"P24",a:"P",th:"Evaluasi",x:"Catat kendala dan usulan perbaikan SOP",h:"Catatan evaluasi panen",k:"o",s:"12-01",e:"12-02"},
+
+{i:"D01",a:"D",th:"Persiapan",x:"Tetapkan petugas tiap sesi unduh data; siapkan folder dan aturan nama file",h:"Jadwal petugas dan folder",k:"o",s:"11-01",e:"11-02"},
+{i:"D02",a:"D",th:"Persiapan",x:"Siapkan format analisis dan laporan (umur tanaman, target EC per tanggal)",h:"Format laporan siap",k:"o",s:"11-02",e:"11-02"},
+{i:"D03",a:"D",th:"Persiapan",x:"Cek alat ukur manual (EC, pH, DO) dan larutan standar",h:"Alat siap untuk kalibrasi",k:"o",s:"11-02",e:"11-05"},
+{i:"D04",a:"D",th:"Persiapan",x:"Perbarui daftar 61 perangkat di formulir log kalibrasi",h:"Daftar perangkat terbaru",k:"o",s:"11-02",e:"11-07"},
+{i:"D05",a:"D",th:"Pelaksanaan",x:"Unduh data website — sesi Pagi (07.00–08.00)",h:"Data lengkap",k:"d",s:"11-01",e:"11-30",tm:"07:00",nt:"Mulai dari jam terakhir unduhan sebelumnya"},
+{i:"D06",a:"D",th:"Pelaksanaan",x:"Cek unduhan, analisis, dan kirim laporan sesi Pagi",h:"Laporan sesi terkirim",k:"d",s:"11-01",e:"11-30",tm:"08:15",nt:"Cek jam hilang, angka tak wajar, EC tandon 200"},
+{i:"D07",a:"D",th:"Pelaksanaan",x:"Unduh data website — sesi Siang (12.00–13.00)",h:"Data lengkap",k:"d",s:"11-01",e:"11-30",tm:"12:00"},
+{i:"D08",a:"D",th:"Pelaksanaan",x:"Cek unduhan, analisis, dan kirim laporan sesi Siang",h:"Laporan sesi terkirim",k:"d",s:"11-01",e:"11-30",tm:"13:15"},
+{i:"D09",a:"D",th:"Pelaksanaan",x:"Unduh data website — sesi Sore (16.00–17.00)",h:"Data lengkap",k:"d",s:"11-01",e:"11-30",tm:"16:00"},
+{i:"D10",a:"D",th:"Pelaksanaan",x:"Cek unduhan, analisis, dan kirim laporan sesi Sore",h:"Laporan sesi terkirim",k:"d",s:"11-01",e:"11-30",tm:"17:15"},
+{i:"D11",a:"D",th:"Pelaksanaan",x:"Kalibrasi: ukur manual 2 titik per lajur, bandingkan dengan sensor, hitung angka koreksi",h:"Angka koreksi mingguan",k:"ds",ds:["11-02","11-09","11-16","11-23","11-30"],tm:"08:00",nt:"Setiap Senin"},
+{i:"D12",a:"D",th:"Pemeliharaan",x:"Bersihkan ujung sensor EC, pH, DO, lalu cek kabelnya",h:"Catatan perawatan",k:"w",s:"11-02",e:"11-30",u:1},
+{i:"D13",a:"D",th:"Pemeliharaan",x:"Simpan cadangan data unduhan dan laporan di tempat kedua",h:"Data aman",k:"w",s:"11-02",e:"11-30",u:1},
+{i:"D14",a:"D",th:"Pemeliharaan",x:"Sensor angka tidak wajar (negatif/di luar batas): cek lapangan, laporkan ke Agrifam",h:"Gangguan cepat tertangani",k:"e"},
+{i:"D15",a:"D",th:"Pemeliharaan",x:"Perbarui formulir log setiap ada kalibrasi atau perawatan",h:"Log terbaru",k:"e"},
+{i:"D16",a:"D",th:"Evaluasi",x:"Rekap mingguan: kelengkapan data, selisih EC, pH, DO terhadap target",h:"Laporan mingguan",k:"ds",ds:["11-09","11-16","11-23"],tm:"10:00",nt:"Laporan minggu 1, 2, 3"},
+{i:"D17",a:"D",th:"Evaluasi",x:"Nilai apakah selisih sensor masih dalam batas ±200–300 µS/cm",h:"Status tiap sensor",k:"w",wd:1,s:"11-02",e:"11-30",tm:"10:30"},
+{i:"D18",a:"D",th:"Evaluasi",x:"Susun laporan bulanan",h:"Laporan bulanan",k:"o",s:"11-30",e:"11-30"},
+
+{i:"R01",a:"R",th:"Persiapan",x:"Cek stok larutan pekat A/B, AB Mix, larutan pH, saringan, suku cadang",h:"Daftar stok dan kekurangan",k:"o",s:"11-02",e:"11-03"},
+{i:"R02",a:"R",th:"Persiapan",x:"Buat jadwal pembuatan larutan pekat dan petugasnya (1 set AB Mix = 100 L pekat = 20.000 L air nutrisi)",h:"Jadwal pembuatan",k:"o",s:"11-02",e:"11-07"},
+{i:"R03",a:"R",th:"Persiapan",x:"Cocokkan jadwal semua alat GH-A dan GH-B dengan layar HMI",h:"Jadwal sesuai",k:"o",s:"11-02",e:"11-04"},
+{i:"R04",a:"R",th:"Persiapan",x:"Cek pipa, keran, sambungan tandon, timer pompa pengaduk",h:"Daftar kebocoran atau kerusakan",k:"o",s:"11-02",e:"11-04"},
+{i:"R05",a:"R",th:"Persiapan",x:"Siapkan formulir pemeriksaan harian, ketinggian tandon, dan meteran air",h:"Formulir siap",k:"o",s:"11-02",e:"11-02"},
+{i:"R06",a:"R",th:"Pelaksanaan",x:"Pemeriksaan pagi (sebelum 06.00): catat ketinggian tandon, stok larutan pekat, kebocoran",h:"Catatan pagi",k:"d",s:"11-01",e:"11-30",tm:"05:30",nt:"Ketinggian tandon juga data pemakaian air"},
+{i:"R07",a:"R",th:"Pelaksanaan",x:"Pantau pompa penyiraman, sirkulasi, sampel, katup air baku, nutrisi otomatis; beban panel ≤5.500 W/25 A",h:"Catatan gangguan",k:"d",s:"11-01",e:"11-30",tm:"09:00"},
+{i:"R08",a:"R",th:"Pelaksanaan",x:"Ubah target EC di HMI: GH-A Siklus 3 → 2,2 dS/m",h:"Target EC sesuai umur",k:"o",s:"11-01",e:"11-01"},
+{i:"R09",a:"R",th:"Pelaksanaan",x:"Ubah target EC di HMI: GH-A Siklus 3 → 2,6 dS/m",h:"Target EC sesuai umur",k:"o",s:"11-05",e:"11-05",tm:"07:00"},
+{i:"R10",a:"R",th:"Pelaksanaan",x:"Ubah target EC di HMI: GH-A Siklus 3 → 3,0 dS/m",h:"Target EC sesuai umur",k:"o",s:"11-09",e:"11-09",tm:"07:00"},
+{i:"R11",a:"R",th:"Pelaksanaan",x:"Ubah target EC di HMI: GH-B Siklus 2 → 3,0 dS/m",h:"Target EC sesuai umur",k:"o",s:"11-13",e:"11-13",tm:"07:00"},
+{i:"R12",a:"R",th:"Pelaksanaan",x:"Ubah target EC di HMI: GH-A Siklus 3 → 3,4 dS/m",h:"Target EC sesuai umur",k:"o",s:"11-14",e:"11-14",tm:"07:00"},
+{i:"R13",a:"R",th:"Pelaksanaan",x:"Ubah target EC di HMI: GH-B Siklus 2 → 2,6 dS/m",h:"Target EC sesuai umur",k:"o",s:"11-28",e:"11-28",tm:"07:00"},
+{i:"R14",a:"R",th:"Pelaksanaan",x:"Buat larutan pekat sesuai jadwal (jangan tambah air baku ke tandon tanpa nutrisi)",h:"Stok larutan pekat cukup",k:"e"},
+{i:"R15",a:"R",th:"Pelaksanaan",x:"Pastikan larutan pekat cukup sampai masa panen",h:"Stok aman",k:"o",s:"11-15",e:"11-21"},
+{i:"R16",a:"R",th:"Pelaksanaan",x:"Pemeriksaan sore: baca meteran air setelah penyiraman selesai",h:"Jumlah air baku harian",k:"d",s:"11-01",e:"11-30",tm:"17:30"},
+{i:"R17",a:"R",th:"Pemeliharaan",x:"Bersihkan saringan; cek katup air baku, pompa, dan kebersihan ruang",h:"Catatan perawatan",k:"w",s:"11-02",e:"11-30"},
+{i:"R18",a:"R",th:"Pemeliharaan",x:"Cek beban panel listrik (5.500 W/25 A) dan urutan alat menyala",h:"Catatan beban listrik",k:"w",s:"11-02",e:"11-30"},
+{i:"R19",a:"R",th:"Pemeliharaan",x:"Catat setiap kejadian tandon meluap dan penyebabnya",h:"Catatan luapan",k:"e"},
+{i:"R20",a:"R",th:"Pemeliharaan",x:"Catat perawatan di formulir log perawatan dan kalibrasi",h:"Log terbaru",k:"e"},
+{i:"R21",a:"R",th:"Evaluasi",x:"Bandingkan EC nyata dengan target sesuai umur tanaman",h:"Selisih EC mingguan",k:"w",s:"11-02",e:"11-30"},
+{i:"R22",a:"R",th:"Evaluasi",x:"Hitung air masuk dan terpakai dari meteran air dan ketinggian tandon",h:"Perhitungan pemakaian air",k:"w",s:"11-02",e:"11-30"},
+{i:"R23",a:"R",th:"Evaluasi",x:"Tinjau pemakaian larutan pekat, tandon meluap, dan kejadian stok habis",h:"Catatan perbaikan",k:"w",s:"11-02",e:"11-30"},
+{i:"R24",a:"R",th:"Evaluasi",x:"Susun laporan bulanan Ruang Pompa dan rencana persiapan tanam GH-B Siklus 3 (2–5 Des)",h:"Laporan bulanan",k:"o",s:"11-30",e:"11-30"}
+];
+var MILE=[["11-09","Sensus buah #1 GH-B (40 HST)"],["11-19","Sensus buah #2 GH-B (50 HST)"],["11-25","Semai bibit GH-B Siklus 3 (usulan)"],["11-28","Seluruh persiapan panen selesai"],["11-29","Mulai panen GH-B Siklus 2 (60 HST)"],["12-06","Pindah tanam GH-B Siklus 3 + serah terima bibit"]];
+var ENDNOV="2026-11-30";
+function Y(s){return"2026-"+s}
+TASKS.forEach(function(t){if(t.s)t.s=Y(t.s);if(t.e)t.e=Y(t.e);if(t.ds)t.ds=t.ds.map(Y)});
+var TBY={};TASKS.forEach(function(t){TBY[t.i]=t});
+
+/* ================= UTIL ================= */
+var P=new URLSearchParams(location.search);
+function nowD(){if(P.get("today")){var h=(P.get("now")||"12:00").split(":");return new Date(P.get("today")+"T"+("0"+h[0]).slice(-2)+":"+h[1]+":00")}return new Date()}
+function pad(n){return("0"+n).slice(-2)}
+function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function pd(s){return new Date(s+"T12:00:00")}
+function add(s,n){return ymd(new Date(pd(s).getTime()+n*864e5))}
+function diff(a,b){return Math.round((pd(a)-pd(b))/864e5)}
+var HARI=["Min","Sen","Sel","Rab","Kam","Jum","Sab"],BLN=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+function fd(s){var d=pd(s);return HARI[d.getDay()]+" "+d.getDate()+" "+BLN[d.getMonth()]}
+function fds(s){var d=pd(s);return d.getDate()+" "+BLN[d.getMonth()]}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var $=function(i){return document.getElementById(i)};
+function toast(t){var m=$("toast");m.textContent=t;m.classList.add("show");setTimeout(function(){m.classList.remove("show")},2200)}
+function todayS(){return ymd(nowD())}
+
+/* ================= STATE ================= */
+var KEY="rkk.v1";
+var db=(function(){var d;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}d=d||{};
+  d.done=d.done||{};d.ev=d.ev||[];d.fired=d.fired||{};
+  d.set=Object.assign({notif:true,wd:6,tm:{},off:{},from:todayS()},d.set||{});return d})();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("Gagal menyimpan")}pushState()}
+function isDone(k){return!!db.done[k]}
+
+/* ================= OKURENSI ================= */
+function occs(t){
+  var r=[],d;
+  if(t.k==="o")r.push({k:t.i,d:t.e||t.s,s:t.s,t:t});
+  else if(t.k==="ds")t.ds.forEach(function(x){r.push({k:t.i+"|"+x,d:x,s:x,t:t})});
+  else if(t.k==="d")for(d=t.s;d<=t.e;d=add(d,1))r.push({k:t.i+"|"+d,d:d,s:d,t:t});
+  else if(t.k==="a")for(d=t.s;d<=t.e;d=add(d,2))r.push({k:t.i+"|"+d,d:d,s:d,t:t});
+  else if(t.k==="w"){var wd=t.wd!=null?t.wd:db.set.wd;for(d=t.s;d<=t.e;d=add(d,1))if(pd(d).getDay()==wd)r.push({k:t.i+"|"+d,d:d,s:d,t:t})}
+  return r}
+function allOccs(){var r=[];TASKS.forEach(function(t){r=r.concat(occs(t))});return r}
+function timeOf(t){return db.set.tm[t.i]||t.tm||(t.k==="o"?"07:30":"08:00")}
+function tracked(o){return o.d>=db.set.from}
+
+/* ================= INFO HARI INI ================= */
+function ecTarget(gh,h){
+  if(gh==="A"){if(h<7)return null;if(h<=10)return 2.2;if(h<=14)return 2.6;if(h<=19)return 3.0;return 3.4}
+  if(h<=43)return 3.4;if(h<=58)return 3.0;return 2.6}
+function fecc(v){return v==null?"–":v.toFixed(1).replace(".",",")}
+
+/* ================= RENDER: HARI INI ================= */
+function rowHTML(o,opt){
+  opt=opt||{};var t=o.t,dn=isDone(o.k),late=!dn&&o.d<todayS();
+  var tag=t.k==="o"&&o.s!==o.d?(" · "+fds(o.s)+"–"+fds(o.d)):"";
+  return'<div class="row" data-open="'+t.i+'" data-d="'+o.d+'"><button class="cb'+(dn?" on":"")+'" data-tg="'+o.k+'">'+(dn?"✓":"")+'</button>'+
+  '<div class="rt'+(dn?" done":"")+'"><div class="t">'+esc(t.x)+'</div><div><span class="chip">'+AREA[t.a]+'</span><span class="chip">'+t.th+'</span>'+
+  (t.u?'<span class="chip us">usulan</span>':'')+(late?'<span class="chip late">terlambat</span>':'')+
+  '<span class="sub">'+esc(t.nt||"")+tag+'</span></div></div>'+(opt.time===false?"":'<div class="tm">'+(t.k==="o"&&o.s!==o.d?fds(o.d):timeOf(t))+'</div>')+'</div>'}
+
+function renderHari(){
+  var td=todayS(),now=nowD(),h="";
+  var hb=diff(td,"2026-09-30"),ha=diff(td,"2026-10-25");
+  h+='<div class="card"><div style="font-size:18px;font-weight:700">'+fd(td)+' 2026</div>'+
+   '<div class="kv"><span>GH-B Siklus 2</span><b>'+hb+' HST · target EC '+fecc(ecTarget("B",hb))+' dS/m</b></div>'+
+   '<div class="kv"><span>GH-A Siklus 3</span><b>'+ha+' HST · target EC '+fecc(ecTarget("A",ha))+' dS/m</b></div></div>';
+  if(window.Notification&&Notification.permission==="default"&&db.set.notif)
+    h+='<div class="alert">Aktifkan notifikasi agar pengingat pekerjaan muncul di HP. <button class="btn sm" id="askn" style="margin-top:6px">Aktifkan notifikasi</button></div>';
+  var all=allOccs().filter(tracked);
+  var overdue=all.filter(function(o){return o.t.k==="o"&&!isDone(o.k)&&o.d<td}).sort(function(a,b){return a.d.localeCompare(b.d)});
+  var today=all.filter(function(o){return o.t.k==="o"?(o.s<=td&&o.d>=td):o.d===td}).sort(function(a,b){return timeOf(a.t).localeCompare(timeOf(b.t))});
+  var missY=all.filter(function(o){return o.t.k!=="o"&&o.d===add(td,-1)&&!isDone(o.k)}).length;
+  if(overdue.length)h+='<div class="card"><h3>Terlambat ('+overdue.length+')</h3>'+overdue.map(rowHTML).join("")+'</div>';
+  var dn=today.filter(function(o){return isDone(o.k)}).length;
+  h+='<div class="card"><h3>Hari ini ('+dn+'/'+today.length+' selesai)</h3>'+(today.length?'<div class="bar" style="margin-bottom:6px"><i style="width:'+Math.round(dn/today.length*100)+'%"></i></div>':'')+
+     (today.length?today.map(rowHTML).join(""):'<div class="empty">Tidak ada pekerjaan terjadwal hari ini</div>')+
+     (missY?'<div class="sub" style="margin-top:6px">'+missY+' pekerjaan rutin kemarin belum dicentang.</div>':'')+'</div>';
+  var soon=all.filter(function(o){return o.t.k!=="e"&&o.s>td&&o.s<=add(td,3)&&(o.t.k==="o"||true)}).sort(function(a,b){return a.s.localeCompare(b.s)||timeOf(a.t).localeCompare(timeOf(b.t))});
+  var shown=soon.filter(function(o){return o.t.k==="o"||o.t.k==="ds"||o.t.k==="w"});
+  h+='<div class="card"><h3>3 hari ke depan</h3>'+(shown.length?shown.map(function(o){return'<div class="kv"><span>'+esc(o.t.x)+'</span><span class="sub" style="white-space:nowrap">'+fds(o.s)+'</span></div>'}).join(""):'<div class="empty">Tidak ada jadwal khusus (selain rutin harian)</div>')+'</div>';
+  var ms=MILE.filter(function(m){return Y(m[0])>=td}).slice(0,3);
+  h+='<div class="card"><h3>Tonggak penting</h3>'+ms.map(function(m){var n=diff(Y(m[0]),td);return'<div class="ms"><span>'+m[1]+'<br><span class="sub">'+fd(Y(m[0]))+'</span></span><b>'+(n===0?"Hari ini":"H-"+n)+'</b></div>'}).join("")+'</div>';
+  $("t-hari").innerHTML=h;
+}
+
+/* ================= RENDER: RENCANA ================= */
+var fArea="",fSt="";
+function taskStat(t){
+  var oc=occs(t).filter(tracked);if(t.k==="e")return{n:db.ev.filter(function(e){return e.i===t.i}).length,ev:1};
+  var d=oc.filter(function(o){return isDone(o.k)}).length;return{n:oc.length,d:d,late:oc.filter(function(o){return!isDone(o.k)&&o.d<todayS()}).length}}
+function renderRencana(){
+  var h='<div class="chips">'+[["","Semua"]].concat(Object.keys(AREA).map(function(k){return[k,AREA[k]]})).map(function(a){return'<button data-fa="'+a[0]+'" class="'+(fArea===a[0]?"on":"")+'">'+a[1]+'</button>'}).join("")+'</div>';
+  h+='<div class="chips">'+[["","Semua status"],["todo","Belum selesai"],["late","Terlambat"],["done","Selesai"]].map(function(a){return'<button data-fs="'+a[0]+'" class="'+(fSt===a[0]?"on":"")+'">'+a[1]+'</button>'}).join("")+'</div>';
+  var list=TASKS.filter(function(t){return!fArea||t.a===fArea});
+  var out="";
+  ["Persiapan","Pelaksanaan","Pemeliharaan","Evaluasi"].forEach(function(th){
+    var rows=list.filter(function(t){if(t.th!==th)return false;var s=taskStat(t);
+      if(fSt==="done")return!s.ev&&s.n>0&&s.d===s.n;if(fSt==="todo")return!s.ev&&s.d<s.n;if(fSt==="late")return s.late>0;return true});
+    if(!rows.length)return;
+    out+='<div class="card"><h3>'+th+'</h3>'+rows.map(function(t){var s=taskStat(t),jad;
+      if(t.k==="o")jad=(t.s===t.e?fds(t.s):fds(t.s)+"–"+fds(t.e));
+      else if(t.k==="e")jad="saat terjadi";else if(t.k==="d")jad="harian "+fds(t.s)+"–"+fds(t.e);
+      else if(t.k==="a")jad="selang 2 hari";else if(t.k==="w")jad="mingguan";else jad=t.ds.map(fds).join(", ");
+      var pr=s.ev?s.n+" catatan":(s.n===1&&t.k==="o"?(s.d?"✓ selesai":(s.late?"terlambat":"belum")):s.d+"/"+s.n+(s.late?" · "+s.late+" terlewat":""));
+      return'<div class="row" data-open="'+t.i+'"><div class="rt"><div class="t">'+esc(t.x)+'</div><div><span class="chip">'+AREA[t.a]+'</span>'+(t.u?'<span class="chip us">usulan</span>':'')+'<span class="sub">'+jad+'</span></div></div><div class="tm" style="width:78px;font-weight:700;color:'+(s.late?"#9a3d00":"var(--navy)")+'">'+pr+'</div></div>'}).join("")+'</div>'});
+  $("t-rencana").innerHTML=h+(out||'<div class="empty">Tidak ada pekerjaan pada filter ini</div>');
+}
+
+/* ================= STATISTIK & PROGRES ================= */
+function stats(area){
+  var td=todayS(),r={tot:0,done:0,due:0,dueDone:0,late:0,des:0,desDone:0};
+  allOccs().forEach(function(o){if(o.t.k==="e"||!tracked(o)||(area&&o.t.a!==area))return;var dn=isDone(o.k);
+    if(o.d>ENDNOV){r.des++;if(dn)r.desDone++;return}
+    r.tot++;if(dn)r.done++;if(o.d<=td){r.due++;if(dn)r.dueDone++}if(o.d<td&&!dn)r.late++});
+  return r}
+function pct(a,b){return b?Math.round(a/b*100):0}
+function renderProgres(){
+  var s=stats(""),h='<div class="card"><div class="sub">Progres November 2026</div><div class="big">'+pct(s.done,s.tot)+'%</div>'+
+    '<div class="bar"><i style="width:'+pct(s.done,s.tot)+'%"></i></div>'+
+    '<div class="kv"><span>Selesai</span><b>'+s.done+' dari '+s.tot+'</b></div>'+
+    '<div class="kv"><span>Seharusnya sudah selesai (sampai hari ini)</span><b>'+s.dueDone+' dari '+s.due+' ('+pct(s.dueDone,s.due)+'%)</b></div>'+
+    '<div class="kv"><span>Terlewat / terlambat</span><b style="color:'+(s.late?"#9a3d00":"inherit")+'">'+s.late+'</b></div>'+
+    (s.des?'<div class="kv"><span>Lanjutan Desember (di luar persentase)</span><b>'+s.desDone+' dari '+s.des+'</b></div>':'')+'</div>';
+  h+='<div class="card"><h3>Per area</h3>'+Object.keys(AREA).map(function(a){var x=stats(a);return'<div style="margin-bottom:10px"><div class="kv" style="border:0;padding:2px 0"><span>'+AREA[a]+'</span><b>'+pct(x.done,x.tot)+'% · '+x.done+'/'+x.tot+(x.late?' · <span style="color:#9a3d00">'+x.late+' terlewat</span>':'')+'</b></div><div class="bar"><i style="width:'+pct(x.done,x.tot)+'%;background:'+(a==="P"?"var(--org)":"var(--blue)")+'"></i></div></div>'}).join("")+'</div>';
+  h+='<div class="card"><h3>Penyelesaian harian</h3><canvas id="cvp" width="640" height="300"></canvas><div class="sub" style="margin-top:4px"><span style="color:var(--navy)">■</span> selesai &nbsp; <span style="color:var(--org)">■</span> belum (hari lewat)</div></div>';
+  var ev=db.ev.slice().sort(function(a,b){return b.t-a.t}).slice(0,15);
+  h+='<div class="card"><h3>Catatan kejadian</h3>'+(ev.length?ev.map(function(e){var t=TBY[e.i];return'<div class="kv" style="display:block"><div class="sub">'+fd(ymd(new Date(e.t)))+' '+pad(new Date(e.t).getHours())+':'+pad(new Date(e.t).getMinutes())+' · '+AREA[t.a]+'</div><div>'+esc(t.x)+(e.n?'<br><i>'+esc(e.n)+'</i>':'')+'</div></div>'}).join(""):'<div class="empty">Belum ada kejadian tercatat</div>')+'</div>';
+  h+='<button class="btn" id="share">Bagikan ringkasan progres</button>';
+  $("t-progres").innerHTML=h;drawDaily();
+}
+function drawDaily(){
+  var cv=$("cvp");if(!cv)return;var c=cv.getContext("2d"),W=cv.width,H=cv.height,td=todayS();
+  c.clearRect(0,0,W,H);c.font="12px Calibri,sans-serif";
+  var days=[],by={};allOccs().forEach(function(o){if(o.t.k==="e"||!tracked(o)||o.d>ENDNOV)return;var b=by[o.d]=by[o.d]||{t:0,d:0};b.t++;if(isDone(o.k))b.d++});
+  for(var d=db.set.from;d<=ENDNOV;d=add(d,1))days.push(d);
+  if(!days.length)return;var L=34,B=28,T=8,pw=W-L-6,ph=H-T-B,bw=pw/days.length;
+  c.fillStyle="#667";c.textAlign="right";[0,50,100].forEach(function(v){var y=T+ph-ph*v/100;c.strokeStyle="#e3e7f0";c.beginPath();c.moveTo(L,y);c.lineTo(W-4,y);c.stroke();c.fillText(v+"%",L-4,y+4)});
+  days.forEach(function(d,i){var b=by[d]||{t:0,d:0},x=L+i*bw,p=b.t?b.d/b.t:0,past=d<=td;
+    var hd=ph*p,hr=past&&b.t?ph*(1-p):0;
+    c.fillStyle="#1f3864";c.fillRect(x+1,T+ph-hd,bw-2,hd);
+    if(hr){c.fillStyle="#ED7D31";c.fillRect(x+1,T+ph-hd-hr,bw-2,hr)}
+    else if(!past){c.fillStyle="#e3e7f0";c.fillRect(x+1,T+ph-4,bw-2,4)}
+    if(i%Math.ceil(days.length/8)===0){c.fillStyle="#667";c.textAlign="center";c.fillText(pd(d).getDate(),x+bw/2,H-10)}});
+}
+
+/* ================= PENGATURAN ================= */
+function renderAtur(){
+  var perm=window.Notification?Notification.permission:"tidak didukung";
+  var h='<div class="card"><h3>Pengingat</h3>'+
+   '<div class="kv"><span>Izin notifikasi</span><b>'+({granted:"Diizinkan",denied:"Ditolak",default:"Belum diminta"}[perm]||perm)+'</b></div>'+
+   '<label><input type="checkbox" id="snotif" style="width:auto" '+(db.set.notif?"checked":"")+'> Pengingat aktif</label>'+
+   '<button class="btn" id="askn2">Aktifkan / uji notifikasi</button>'+
+   '<p class="sub">Notifikasi dalam aplikasi muncul saat aplikasi terbuka atau berjalan di latar belakang. Agar pengingat tetap bunyi walau aplikasi tertutup, impor kalender di bawah ke Google Calendar.</p></div>'+
+   '<div class="card"><h3>Kalender (pengingat andal)</h3><p class="sub">Unduh file .ics lalu buka/impor di Google Calendar HP. Setiap pekerjaan jadi acara dengan alarm di jam yang sama dengan aplikasi, termasuk pekerjaan harian dan mingguan.</p><button class="btn" id="ics">Unduh jadwal & alarm (.ics)</button></div>'+
+   '<div class="card"><h3>Jadwal</h3><label>Hari untuk pekerjaan mingguan</label><select id="swd">'+["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"].map(function(n,i){return'<option value="'+i+'"'+(db.set.wd==i?" selected":"")+'>'+n+'</option>'}).join("")+'</select>'+
+   '<label>Mulai pelacakan dari tanggal</label><input type="date" id="sfrom" value="'+db.set.from+'"><p class="sub">Pekerjaan sebelum tanggal ini tidak dihitung sebagai terlambat.</p></div>'+
+   '<div class="card"><h3>Data</h3><button class="btn" id="csv">Unduh log checkpoint (CSV/Excel)</button><button class="btn alt" id="bkp">Unduh cadangan (JSON)</button><label style="margin-top:12px">Pulihkan dari cadangan</label><input type="file" id="imp" accept=".json,application/json"><button class="btn alt" id="rst" style="color:#b00020;border-color:#b00020">Reset semua checkpoint</button><p class="sub">Data tersimpan di HP ini. Unduh cadangan berkala.</p></div>';
+  $("t-atur").innerHTML=h;
+}
+
+/* ================= DETAIL ================= */
+function openTask(id,d){
+  var t=TBY[id],h='<div style="font-size:17px;font-weight:700">'+esc(t.x)+'</div><div style="margin:6px 0"><span class="chip">'+AREA[t.a]+'</span><span class="chip">'+t.th+'</span>'+(t.u?'<span class="chip us">usulan</span>':'')+'</div>'+
+   '<div class="kv"><span>Hasil</span><b style="text-align:right">'+esc(t.h)+'</b></div>'+(t.nt?'<div class="kv"><span>Catatan</span><span style="text-align:right">'+esc(t.nt)+'</span></div>':'');
+  if(t.k==="e"){
+    var ev=db.ev.filter(function(e){return e.i===id}).sort(function(a,b){return b.t-a.t});
+    h+='<label>Catatan kejadian baru</label><textarea id="evn" rows="2" placeholder="Apa yang terjadi / dilakukan"></textarea><button class="btn" id="evadd" data-i="'+id+'">+ Catat kejadian sekarang</button>'+
+      '<div style="margin-top:10px">'+(ev.length?ev.map(function(e){var dt=new Date(e.t);return'<div class="kv" style="display:block"><span class="sub">'+fd(ymd(dt))+' '+pad(dt.getHours())+':'+pad(dt.getMinutes())+'</span> <button class="btn sm alt" data-evdel="'+e.t+'" style="float:right;padding:2px 8px">hapus</button><div>'+esc(e.n||"(tanpa catatan)")+'</div></div>'}).join(""):'<div class="empty">Belum ada catatan</div>')+'</div>';
+  }else if(t.k==="o"){
+    var o=occs(t)[0],dn=db.done[o.k];
+    h+='<div class="kv"><span>Jadwal</span><b>'+(o.s===o.d?fd(o.d):fd(o.s)+" – "+fd(o.d))+'</b></div>'+
+     '<div class="kv"><span>Status</span><b>'+(dn?"Selesai "+fd(ymd(new Date(dn.t)))+" "+pad(new Date(dn.t).getHours())+":"+pad(new Date(dn.t).getMinutes()):(o.d<todayS()?"Terlambat":"Belum selesai"))+'</b></div>'+
+     '<label>Catatan hasil / checkpoint</label><textarea id="dnn" rows="3" placeholder="mis. jumlah, temuan, kendala">'+esc(dn?dn.n:"")+'</textarea>'+
+     '<button class="btn" data-ck="'+o.k+'">'+(dn?"Simpan catatan":"✓ Tandai selesai")+'</button>'+(dn?'<button class="btn alt" data-uck="'+o.k+'">Batalkan selesai</button>':'');
+  }else{
+    var oc=occs(t).filter(tracked),td=todayS();
+    h+='<label>Checkpoint per tanggal ('+oc.filter(function(o){return isDone(o.k)}).length+'/'+oc.length+')</label><div class="grid">'+oc.map(function(o){return'<button data-tg="'+o.k+'" class="'+(isDone(o.k)?"on":"")+(o.d>td?" fut":"")+'" '+(d===o.d?'style="outline:2px solid var(--org)"':'')+'>'+fds(o.d)+(isDone(o.k)?" ✓":"")+'</button>'}).join("")+'</div>';
+  }
+  if(t.k!=="e"){var off=db.set.off[t.i];
+    h+='<label style="margin-top:14px">Jam pengingat</label><input type="time" id="rtm" value="'+timeOf(t)+'" data-i="'+id+'"><label><input type="checkbox" id="roff" data-i="'+id+'" style="width:auto" '+(off?"":"checked")+'> Pengingat aktif untuk pekerjaan ini</label>'}
+  h+='<button class="btn alt" id="sclose">Tutup</button>';
+  $("sin").innerHTML=h;$("sheet").classList.add("on");
+}
+
+/* ================= AKSI ================= */
+function toggle(k){
+  if(db.done[k]){delete db.done[k];toast("Checkpoint dibatalkan")}
+  else{db.done[k]={t:Date.now(),n:""};toast("✓ Checkpoint tersimpan "+pad(new Date().getHours())+":"+pad(new Date().getMinutes()))}
+  save();renderAll();
+}
+document.addEventListener("click",function(e){
+  var el=e.target.closest("[data-tg],[data-open],[data-ck],[data-uck],[data-fa],[data-fs],[data-evdel]");
+  var id=e.target.id;
+  if(e.target.closest("#sheet")&&e.target.id==="sheet"){$("sheet").classList.remove("on");return}
+  if(id==="sclose"){$("sheet").classList.remove("on");return}
+  if(id==="askn"||id==="askn2"){askPerm();return}
+  if(id==="ics"){makeICS();return}
+  if(id==="csv"){makeCSV();return}
+  if(id==="bkp"){dl("cadangan_rencana_kerja_"+todayS()+".json",JSON.stringify(db),"application/json");return}
+  if(id==="rst"){if(confirm("Hapus semua checkpoint dan catatan kejadian?")){db.done={};db.ev=[];db.fired={};save();renderAll();toast("Direset")}return}
+  if(id==="share"){shareSummary();return}
+  if(id==="evadd"){var i=e.target.dataset.i;db.ev.push({i:i,t:Date.now(),n:$("evn").value.trim()});save();renderAll();openTask(i);toast("Kejadian dicatat");return}
+  if(!el)return;
+  if(el.dataset.evdel){db.ev=db.ev.filter(function(x){return String(x.t)!==el.dataset.evdel});save();renderAll();var tt=$("sin").querySelector("#evadd");if(tt)openTask(tt.dataset.i);return}
+  if(el.dataset.fa!==undefined){fArea=el.dataset.fa;renderRencana();return}
+  if(el.dataset.fs!==undefined){fSt=el.dataset.fs;renderRencana();return}
+  if(el.dataset.ck){var k=el.dataset.ck,n=$("dnn").value.trim();if(db.done[k])db.done[k].n=n;else{db.done[k]={t:Date.now(),n:n};toast("✓ Checkpoint tersimpan")}save();renderAll();$("sheet").classList.remove("on");return}
+  if(el.dataset.uck){delete db.done[el.dataset.uck];save();renderAll();$("sheet").classList.remove("on");return}
+  if(el.dataset.tg){var inSheet=!!e.target.closest("#sheet");toggle(el.dataset.tg);if(inSheet){var tid=el.dataset.tg.split("|")[0];openTask(tid)}return}
+  if(el.dataset.open){openTask(el.dataset.open,el.dataset.d);return}
+});
+document.addEventListener("change",function(e){
+  var t=e.target;
+  if(t.id==="snotif"){db.set.notif=t.checked;save()}
+  if(t.id==="swd"){db.set.wd=+t.value;save();renderAll()}
+  if(t.id==="sfrom"&&t.value){db.set.from=t.value;save();renderAll()}
+  if(t.id==="rtm"&&t.value){db.set.tm[t.dataset.i]=t.value;save();toast("Jam pengingat disimpan")}
+  if(t.id==="roff"){if(t.checked)delete db.set.off[t.dataset.i];else db.set.off[t.dataset.i]=1;save()}
+  if(t.id==="imp"){var f=t.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d.done)throw 0;if(confirm("Ganti semua data di HP ini dengan cadangan?")){db=Object.assign(db,d);save();renderAll();toast("Data dipulihkan")}}catch(x){toast("File cadangan tidak valid")}};r.readAsText(f)}
+});
+document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){
+  document.querySelectorAll("nav button").forEach(function(x){x.classList.toggle("on",x===b)});
+  document.querySelectorAll(".tab").forEach(function(s){s.classList.toggle("on",s.id==="t-"+b.dataset.t)});renderAll()}});
+
+/* ================= EKSPOR ================= */
+function dl(name,text,type){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function makeCSV(){
+  var rows=[["Tanggal jadwal","Area","Tahap","Pekerjaan","Status","Waktu checkpoint","Catatan"]];
+  allOccs().filter(function(o){return o.t.k!=="e"&&tracked(o)}).sort(function(a,b){return a.d.localeCompare(b.d)}).forEach(function(o){var dn=db.done[o.k];
+    rows.push([o.d,AREA[o.t.a],o.t.th,o.t.x,dn?"Selesai":(o.d<todayS()?"Terlewat":"Belum"),dn?new Date(dn.t).toLocaleString("id-ID"):"",dn?dn.n:""])});
+  db.ev.forEach(function(e){var t=TBY[e.i];rows.push([ymd(new Date(e.t)),AREA[t.a],t.th,t.x,"Kejadian",new Date(e.t).toLocaleString("id-ID"),e.n])});
+  dl("log_checkpoint_"+todayS()+".csv","\ufeff"+rows.map(function(r){return r.map(function(c){return'"'+String(c==null?"":c).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n"),"text/csv");
+}
+function shareSummary(){
+  var s=stats(""),td=todayS(),tx="Progres Rencana Kerja November 2026 ("+fds(td)+")\n· Total: "+pct(s.done,s.tot)+"% ("+s.done+"/"+s.tot+")\n· Sesuai jadwal sampai hari ini: "+s.dueDone+"/"+s.due+" ("+pct(s.dueDone,s.due)+"%)\n· Terlewat: "+s.late+"\n"+
+   Object.keys(AREA).map(function(a){var x=stats(a);return"· "+AREA[a]+": "+pct(x.done,x.tot)+"% ("+x.done+"/"+x.tot+")"}).join("\n");
+  if(navigator.share)navigator.share({text:tx}).catch(function(){});else if(navigator.clipboard){navigator.clipboard.writeText(tx);toast("Ringkasan disalin")}else prompt("Salin ringkasan:",tx);
+}
+function icsEsc(s){return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n")}
+function fold(l){var o="";while(l.length>73){o+=l.slice(0,73)+"\r\n ";l=l.slice(73)}return o+l}
+function dtl(d,tm){return d.replace(/-/g,"")+"T"+tm.replace(":","")+"00"}
+function addMin(tm,m){var a=tm.split(":"),t=(+a[0]*60+ +a[1]+m)%1440;return pad(Math.floor(t/60))+":"+pad(t%60)}
+function makeICS(){
+  var td=todayS(),L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Lavaland//Rencana Kerja Kebun//ID","CALSCALE:GREGORIAN","X-WR-CALNAME:Rencana Kerja Kebun","X-WR-TIMEZONE:Asia/Jakarta"];
+  var stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z",n=0;
+  function ev(uid,d,tm,sum,desc,rule,rdates){
+    L.push("BEGIN:VEVENT","UID:"+uid+"@lavaland-kebun","DTSTAMP:"+stamp,"DTSTART:"+dtl(d,tm),"DTEND:"+dtl(d,addMin(tm,30)),"SUMMARY:"+icsEsc(sum),"DESCRIPTION:"+icsEsc(desc));
+    if(rule)L.push("RRULE:"+rule);if(rdates)L.push("RDATE:"+rdates.map(function(x){return dtl(x,tm)}).join(","));
+    L.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc(sum),"TRIGGER:PT0M","END:VALARM","END:VEVENT");n++}
+  TASKS.forEach(function(t){
+    if(t.k==="e"||db.set.off[t.i])return;var tm=timeOf(t),sum="["+AREA[t.a]+"] "+t.x,desc="Hasil: "+t.h+(t.nt?"\nCatatan: "+t.nt:"");
+    var oc=occs(t).filter(function(o){return o.d>=td});if(!oc.length)return;
+    if(t.k==="o"){var o=oc[0];var first=o.s<td?td:o.s;ev(t.i,first,tm,sum,desc);if(o.d!==first&&o.d>=td)ev(t.i+"-batas",o.d,tm,"BATAS: "+sum,desc)}
+    else if(t.k==="d")ev(t.i,oc[0].d,tm,sum,desc,"FREQ=DAILY;COUNT="+oc.length);
+    else if(t.k==="a")ev(t.i,oc[0].d,tm,sum,desc,"FREQ=DAILY;INTERVAL=2;COUNT="+oc.length);
+    else if(t.k==="w")ev(t.i,oc[0].d,tm,sum,desc,"FREQ=WEEKLY;COUNT="+oc.length);
+    else if(t.k==="ds"){ev(t.i,oc[0].d,tm,sum,desc,null,oc.length>1?oc.slice(1).map(function(o){return o.d}):null)}
+  });
+  L.push("END:VCALENDAR");
+  dl("rencana_kerja_kebun.ics",L.map(fold).join("\r\n"),"text/calendar");toast(n+" acara dalam file kalender");
+}
+
+/* ================= NOTIFIKASI ================= */
+function reminders(){
+  var r=[];TASKS.forEach(function(t){if(t.k==="e"||db.set.off[t.i])return;var tm=timeOf(t);
+    occs(t).forEach(function(o){
+      r.push({id:o.k+"@"+o.s,k:o.k,t:new Date(o.s+"T"+tm+":00").getTime(),title:"["+AREA[t.a]+"] "+timeOf(t),body:t.x});
+      if(t.k==="o"&&o.d!==o.s)r.push({id:o.k+"@"+o.d+"B",k:o.k,t:new Date(o.d+"T"+tm+":00").getTime(),title:"Batas hari ini · "+AREA[t.a],body:t.x})})});
+  return r}
+function fire(r){
+  var nt=db.set.notif&&window.Notification&&Notification.permission==="granted";
+  window.__fired=(window.__fired||[]).concat(r.id);
+  toast("⏰ "+r.body.slice(0,70));
+  if(!nt)return;
+  var opt={body:r.body,tag:r.id,icon:"icon-192.png",badge:"icon-192.png",data:{k:r.k}};
+  if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(g){g.showNotification(r.title,opt)}).catch(function(){try{new Notification(r.title,opt)}catch(e){}});
+  else try{new Notification(r.title,opt)}catch(e){}}
+function checkReminders(){
+  if(!db.set.notif)return;var now=nowD().getTime(),n=0,from=db.set.from;
+  reminders().forEach(function(r){if(r.t>now||now-r.t>18*36e5||db.fired[r.id]||isDone(r.k)||r.id.split("@")[1].slice(0,10)<from)return;
+    db.fired[r.id]=1;n++;if(n<=4)fire(r)});
+  if(n>4){fire({id:"ringkas"+now,k:"",title:"Pengingat pekerjaan",body:"Ada "+n+" pekerjaan menunggu. Buka aplikasi untuk detail."})}
+  if(n){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}}
+function askPerm(){
+  if(!window.Notification){toast("Browser ini tidak mendukung notifikasi");return}
+  Notification.requestPermission().then(function(p){
+    if(p==="granted"){fire({id:"uji"+Date.now(),k:"",title:"Rencana Kerja Kebun",body:"Notifikasi aktif. Pengingat pekerjaan akan muncul di sini."});
+      if("serviceWorker"in navigator)navigator.serviceWorker.ready.then(function(g){if(g.periodicSync)g.periodicSync.register("kebun-remind",{minInterval:36e5}).catch(function(){})});}
+    else toast(p==="denied"?"Izin ditolak. Ubah di pengaturan situs browser.":"Izin belum diberikan");renderAll()})}
+function pushState(){ // salinan jadwal pengingat untuk service worker (periodic sync)
+  try{if(!window.caches)return;var now=Date.now(),rem=reminders().filter(function(r){return r.t>now-18*36e5&&r.t<now+4*864e5});
+    var done={};rem.forEach(function(r){if(isDone(r.k))done[r.k]=1});
+    caches.open("kebun-state").then(function(c){return c.put("state.json",new Response(JSON.stringify({rem:rem,done:done,fired:db.fired,off:!db.set.notif})))}).catch(function(){})}catch(e){}}
+
+/* ================= MULAI ================= */
+function renderAll(){var on=document.querySelector(".tab.on").id;
+  if(on==="t-hari")renderHari();else if(on==="t-rencana")renderRencana();else if(on==="t-progres")renderProgres();else renderAtur();
+  var p=stats("");$("hdr").textContent="November 2026 · Progres "+pct(p.done,p.tot)+"% · "+p.late+" terlewat"}
+renderAll();checkReminders();pushState();
+setInterval(function(){checkReminders();if(document.querySelector(".tab.on").id==="t-hari")renderHari()},30000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden){checkReminders();renderAll()}});
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+</script>
+</body>
+</html>
